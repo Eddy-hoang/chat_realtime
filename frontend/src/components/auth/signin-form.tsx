@@ -6,41 +6,40 @@ import { Label } from "@/components/ui/label";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { authService } from "@/services/authServices";
+import { useAuthStore } from "@/stores/useAuthStore";
+import { useNavigate } from "react-router-dom";
 
-const signupSchema = z.object({
-  firstname: z.string().min(1, "Firstname is required"),
-  lastname: z.string().min(1, "Lastname is required"),
+const signInSchema = z.object({
   username: z.string().min(3, "Username is required"),
-  email: z.string().email("Invalid email"),
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-type SignupFormValues = z.infer<typeof signupSchema>;
+type SignInFormValues = z.infer<typeof signInSchema>;
 
-export function SignupForm({
+export function SignInForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const{signIn} = useAuthStore();
+
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<SignupFormValues>({
-    resolver: zodResolver(signupSchema),
+  } = useForm<SignInFormValues>({
+    resolver: zodResolver(signInSchema),
     defaultValues: {
-      firstname: "",
-      lastname: "",
       username: "",
-      email: "",
       password: "",
     },
   });
-
-  const onSubmit = async (data: SignupFormValues) => {
-    console.log("signup data:", data);
-    // gọi backend ở đây
+  const onSubmit = async (data: SignInFormValues) => {
+    const {username, password} = data;
+    await signIn(username, password);
+    navigate("/")
   };
-
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card className="overflow-hidden p-0 border-border">
@@ -52,47 +51,10 @@ export function SignupForm({
                 <a href="/" className="mx-auto block w-fit text-center">
                   <img src="/logo.svg" alt="logo" />
                 </a>
-                <h1 className="text-2xl font-bold">Create an account</h1>
+                <h1 className="text-2xl font-bold">Welcone Back!</h1>
                 <p className="text-muted-foreground text-balance">
-                  Welcome! Sign up to get started
+                  Welcome! Sign In to get started
                 </p>
-              </div>
-
-              {/* name */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="lastname" className="block text-sm">
-                    Last name
-                  </Label>
-                  <Input
-                    type="text"
-                    id="lastname"
-                    placeholder="Doe"
-                    {...register("lastname")}
-                  />
-                  {errors.lastname && (
-                    <p className="text-destructive text-sm">
-                      {errors.lastname.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="firstname" className="block text-sm">
-                    First name
-                  </Label>
-                  <Input
-                    type="text"
-                    id="firstname"
-                    placeholder="John"
-                    {...register("firstname")}
-                  />
-                  {errors.firstname && (
-                    <p className="text-destructive text-sm">
-                      {errors.firstname.message}
-                    </p>
-                  )}
-                </div>
               </div>
 
               {/* username */}
@@ -109,24 +71,6 @@ export function SignupForm({
                 {errors.username && (
                   <p className="text-destructive text-sm">
                     {errors.username.message}
-                  </p>
-                )}
-              </div>
-
-              {/* email */}
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="email" className="block text-sm">
-                  Email
-                </Label>
-                <Input
-                  type="email"
-                  id="email"
-                  placeholder="you@example.com"
-                  {...register("email")}
-                />
-                {errors.email && (
-                  <p className="text-destructive text-sm">
-                    {errors.email.message}
                   </p>
                 )}
               </div>
@@ -149,15 +93,20 @@ export function SignupForm({
                 )}
               </div>
 
-              {/* button */}
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Creating..." : "Create account"}
-              </Button>
+              {/* button Signin */}
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isSubmitting}
+              >Sign in</Button>
 
               <div className="text-center text-sm">
-                Already have an account{" "}
-                <a href="/signin" className="underline underline-offset-4">
-                  Sign in
+                No account yet{" "}
+                <a
+                  href="/signup"
+                  className="underline underline-offset-4 hover:text-primary"
+                >
+                  Sign up
                 </a>
               </div>
             </div>
@@ -165,7 +114,7 @@ export function SignupForm({
 
           <div className="bg-muted relative hidden md:block">
             <img
-              src="/placeholderSignUp.png"
+              src="/placeholder.png"
               alt="Image"
               className="absolute top-1/2 -translate-y-1/2 object-cover"
             />
